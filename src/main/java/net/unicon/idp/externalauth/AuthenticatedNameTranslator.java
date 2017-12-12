@@ -16,13 +16,7 @@ import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Simple translation of the principal name from the CAS assertion to the string value used by Shib
@@ -33,16 +27,47 @@ import java.util.Set;
 public class AuthenticatedNameTranslator implements CasToShibTranslator {
     private Logger logger = LoggerFactory.getLogger(ShibcasAuthServlet.class);
 
+    private Assertion assertion = new Assertion() {
+        @Override
+        public Date getValidFromDate() {
+            return null;
+        }
+
+        @Override
+        public Date getValidUntilDate() {
+            return null;
+        }
+
+        @Override
+        public Date getAuthenticationDate() {
+            return null;
+        }
+
+        @Override
+        public Map<String, Object> getAttributes() {
+            return null;
+        }
+
+        @Override
+        public AttributePrincipal getPrincipal() {
+            return null;
+        }
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+    };
+
     @Override
-    public void doTranslation(final HttpServletRequest request, final HttpServletResponse response,
-                              final Assertion assertion) {
+    public void doTranslation(final HttpServletRequest request, final HttpServletResponse response) {
         logger.info("Entering doTranslation....");
         logger.debug("Entering doTranslation....");
         logger.error("Entering doTranslation....");
-        if (assertion == null || assertion.getPrincipal() == null) {
-            logger.error("No valid assertion or principal could be found to translate");
-            return;
-        }
+//        if (assertion == null || assertion.getPrincipal() == null) {
+//            logger.error("No valid assertion or principal could be found to translate");
+//            return;
+//        }
         AttributePrincipal casPrincipal = assertion.getPrincipal();
         logger.debug("principalName found and being passed on: {}", casPrincipal.getName());
 

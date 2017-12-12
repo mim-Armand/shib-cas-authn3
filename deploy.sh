@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+./gradlew clean; ./gradlew up
+
 cd build/docker/cas_server/cas/
 
 mvn package
 
-docker ps -a | awk '{print $1}' | xargs docker rm -f
+docker rm -f docker_cas_server_1
 
-docker images -a | awk '{print $3}' | xargs docker rmi -f
+docker rmi -f docker_cas_server
 
 cd ../../; docker-compose up

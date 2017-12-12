@@ -137,8 +137,8 @@ To build and execute:
  * `cd build/docker/cas_server/cas/`
  * `mvn package`
  >> **PLEASE NOTE**: the following command(s) will remove **all** docker containers and images, if not desired, please remove them manually:
- * `docker ps -a | awk '{print $1}' | xargs docker rm -f`
- * `docker images -a | awk '{print $3}' | xargs docker rmi -f`
+ * `docker rm -f docker_cas_server_1`
+ * `docker rmi -f docker_cas_server `
  * `cd ../../; docker-compose up` 
 
 Then browse to: `https://idptestbed/idp/profile/SAML2/Unsolicited/SSO?providerId=https://sp.idptestbed/shibboleth`

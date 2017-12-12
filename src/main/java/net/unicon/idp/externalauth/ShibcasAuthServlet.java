@@ -63,8 +63,6 @@ public class ShibcasAuthServlet extends HttpServlet {
         // TODO: We have the opportunity to give back more to Shib than just the PRINCIPAL_NAME_KEY. Identify additional information
 
         logger.info("Entering doGet....");
-        logger.debug("Entering doGet....");
-        logger.error("Entering doGet....");
 
         try {
             final String ticket = CommonUtils.safeGetParameter(request, artifactParameterName);
@@ -94,8 +92,6 @@ public class ShibcasAuthServlet extends HttpServlet {
 //            }
 
             logger.info("Entering doGet trycatch....");
-            logger.debug("Entering doGet trycatch....");
-            logger.error("Entering doGet trycatch....");
 
             validateCasTicket(request, response, ticket, authenticationKey, force);
 
@@ -111,24 +107,28 @@ public class ShibcasAuthServlet extends HttpServlet {
 
     private void validateCasTicket(final HttpServletRequest request, final HttpServletResponse response, final String ticket,
                                    final String authenticationKey, final boolean force) throws ExternalAuthenticationException, IOException {
-        //try {
+
+        logger.info("FIRED validateCasTicket");
+        try {
+            logger.info("FIRED validateCasTicket TRY >>>");
         ticketValidator.setRenew(force);
         String serviceUrl = constructServiceUrl(request, response, true);
         logger.info("validating ticket: {} with service url: {}", ticket, serviceUrl);
 
-//            Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
-//            if (assertion == null) {
-//                throw new TicketValidationException("Validation failed. Assertion could not be retrieved for ticket " + ticket);
-//            }
-//            for (CasToShibTranslator casToShibTranslator : translators) {
-//                casToShibTranslator.doTranslation(request, response, assertion);
-//            }
+            Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
+            if (assertion == null) {
+                logger.info("validateCasTicket >>>> ASSERTION NULL");
+                throw new TicketValidationException("Validation failed. Assertion could not be retrieved for ticket " + ticket);
+            }
+            for (CasToShibTranslator casToShibTranslator : translators) {
+                casToShibTranslator.doTranslation(request, response);
+            }
         ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
-//        } catch (final TicketValidationException e) {
-//            logger.error("Ticket validation failed, returning InvalidTicket", e);
-//            request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, "InvalidTicket");
-//            ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
-//        }
+        } catch (final TicketValidationException e) {
+            logger.error("Ticket validation failed, returning InvalidTicket", e);
+            request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, "InvalidTicket");
+            ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
+        }
     }
 
     protected void startLoginRequest(final HttpServletRequest request, final HttpServletResponse response, Boolean force, Boolean passive) {
