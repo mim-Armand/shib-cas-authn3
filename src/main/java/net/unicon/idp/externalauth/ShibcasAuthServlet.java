@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.RequestDispatcher;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -49,6 +51,7 @@ public class ShibcasAuthServlet extends HttpServlet {
     private String casServerPrefix;
     private String ticketValidatorName;
     private String entityIdLocation;
+    private static final String AUTHORIZATION = "ElasticBox-Token";
 
     private Cas20ServiceTicketValidator ticketValidator;
 
@@ -58,25 +61,39 @@ public class ShibcasAuthServlet extends HttpServlet {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException {
         // TODO: We have the opportunity to give back more to Shib than just the PRINCIPAL_NAME_KEY. Identify additional information
+
+        logger.info("Entering doGet....");
+
         try {
             final String ticket = CommonUtils.safeGetParameter(request, artifactParameterName);
             final String gatewayAttempted = CommonUtils.safeGetParameter(request, "gatewayAttempted");
             final String authenticationKey = ExternalAuthentication.startExternalAuthentication(request);
             final boolean force = Boolean.parseBoolean(request.getAttribute(ExternalAuthentication.FORCE_AUTHN_PARAM).toString());
             final boolean passive = Boolean.parseBoolean(request.getAttribute(ExternalAuthentication.PASSIVE_AUTHN_PARAM).toString());
+            final String token = request.getHeader(AUTHORIZATION);
 
-            if ((ticket == null || ticket.isEmpty()) && (gatewayAttempted == null || gatewayAttempted.isEmpty())) {
-                logger.debug("ticket and gatewayAttempted are not set; initiating CAS login redirect");
-                startLoginRequest(request, response, force, passive);
-                return;
-            }
 
-            if (ticket == null || ticket.isEmpty()) {
-                logger.debug("Gateway/Passive returned no ticket, returning NoPassive.");
-                request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, AuthnEventIds.NO_PASSIVE);
-                ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
-                return;
-            }
+//            CamProviderClient camProviderClient = new CamProviderClient(new RestTemplate(), "https://cam.ctl.io");
+//
+//            List<CamProvider> personalWorkspaceProviders = camProviderClient.getPersonalWorkspaceProviders(token);
+//            logger.info("personalWorkspaceProviders" + personalWorkspaceProviders);
+
+//            if ((ticket == null || ticket.isEmpty()) && (gatewayAttempted == null || gatewayAttempted.isEmpty())) {
+//                logger.debug("ticket and gatewayAttempted are not set; initiating CAS login redirect");
+//                startLoginRequest(request, response, force, passive);
+//                return;
+//            }
+//
+//            if (ticket == null || ticket.isEmpty()) {
+//                logger.debug("Gateway/Passive returned no ticket, returning NoPassive.");
+//                request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, AuthnEventIds.NO_PASSIVE);
+//                ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
+//                return;
+//            }
+
+            logger.info("Entering doGet trycatch....");
+            logger.debug("Entering doGet trycatch....");
+            logger.error("Entering doGet trycatch....");
 
             validateCasTicket(request, response, ticket, authenticationKey, force);
 
@@ -92,24 +109,24 @@ public class ShibcasAuthServlet extends HttpServlet {
 
     private void validateCasTicket(final HttpServletRequest request, final HttpServletResponse response, final String ticket,
                                    final String authenticationKey, final boolean force) throws ExternalAuthenticationException, IOException {
-        try {
-            ticketValidator.setRenew(force);
-            String serviceUrl = constructServiceUrl(request, response, true);
-            logger.debug("validating ticket: {} with service url: {}", ticket, serviceUrl);
-            
-            Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
-            if (assertion == null) {
-                throw new TicketValidationException("Validation failed. Assertion could not be retrieved for ticket " + ticket);
-            }
-            for (CasToShibTranslator casToShibTranslator : translators) {
-                casToShibTranslator.doTranslation(request, response, assertion);
-            }
-            ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
-        } catch (final TicketValidationException e) {
-            logger.error("Ticket validation failed, returning InvalidTicket", e);
-            request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, "InvalidTicket");
-            ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
+        //try {
+        ticketValidator.setRenew(force);
+        String serviceUrl = constructServiceUrl(request, response, true);
+        logger.debug("validating ticket: {} with service url: {}", ticket, serviceUrl);
+
+        Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
+//            if (assertion == null) {
+//                throw new TicketValidationException("Validation failed. Assertion could not be retrieved for ticket " + ticket);
+//            }
+        for (CasToShibTranslator casToShibTranslator : translators) {
+            casToShibTranslator.doTranslation(request, response, assertion);
         }
+        ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
+//        } catch (final TicketValidationException e) {
+//            logger.error("Ticket validation failed, returning InvalidTicket", e);
+//            request.setAttribute(ExternalAuthentication.AUTHENTICATION_ERROR_KEY, "InvalidTicket");
+//            ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
+//        }
     }
 
     protected void startLoginRequest(final HttpServletRequest request, final HttpServletResponse response, Boolean force, Boolean passive) {
@@ -166,11 +183,11 @@ public class ShibcasAuthServlet extends HttpServlet {
         parseProperties(ac.getEnvironment());
 
         switch (ticketValidatorName) {
-           case "cas30":
-               ticketValidator = new Cas30ServiceTicketValidator(casServerPrefix);
-               break;
-           case "cas20":
-               ticketValidator = new Cas20ServiceTicketValidator(casServerPrefix);
+            case "cas30":
+                ticketValidator = new Cas30ServiceTicketValidator(casServerPrefix);
+                break;
+            case "cas20":
+                ticketValidator = new Cas20ServiceTicketValidator(casServerPrefix);
         }
 
         if (ticketValidator == null) {
@@ -201,7 +218,7 @@ public class ShibcasAuthServlet extends HttpServlet {
 
         serverName = environment.getRequiredProperty("shibcas.serverName");
         logger.debug("shibcas.serverName: {}", serverName);
-        
+
         ticketValidatorName = environment.getProperty("shibcas.ticketValidatorName", "cas30");
         logger.debug("shibcas.ticketValidatorName: {}", ticketValidatorName);
 
@@ -257,11 +274,11 @@ public class ShibcasAuthServlet extends HttpServlet {
     }
 
     /**
-      * Like the above, but with a flag indicating whether we're validating a service ticket,
-      * in which case we should not modify the service URL returned by CAS CommonUtils; this
-      * avoids appending the entity ID twice when entityIdLocation=embed, since the ID is already
-      * embedded in the string during validation.
-      */
+     * Like the above, but with a flag indicating whether we're validating a service ticket,
+     * in which case we should not modify the service URL returned by CAS CommonUtils; this
+     * avoids appending the entity ID twice when entityIdLocation=embed, since the ID is already
+     * embedded in the string during validation.
+     */
     protected String constructServiceUrl(final HttpServletRequest request, final HttpServletResponse response, final boolean isValidatingTicket ) {
         return isValidatingTicket
                 ? CommonUtils.constructServiceUrl(request, response, null, serverName, serviceParameterName, artifactParameterName, true)
