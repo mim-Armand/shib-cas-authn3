@@ -131,7 +131,16 @@ The project distributables can be built using `./gradlew`. The artifacts will be
 
 This project includes a Docker environment to assist with development/testing. 
 
-To build and execute: `./gradlew clean; ./gradlew up`
+To build and execute: 
+ * checkout the project.
+ * From the base of the project run `./gradlew clean; ./gradlew up`
+ * `cd build/docker/cas_server/cas/`
+ * `mvn package`
+ >> **PLEASE NOTE**: the following command(s) will remove **all** docker containers and images, if not desired, please remove them manually:
+ * `docker ps -a | awk '{print $1}' | xargs docker rm -f`
+ * `docker images -a | awk '{print $3}' | xargs docker rmi -f`
+ * `cd ../../; docker-compose up` 
+
 Then browse to: `https://idptestbed/idp/profile/SAML2/Unsolicited/SSO?providerId=https://sp.idptestbed/shibboleth`
 
 > You'll need a `hosts` file entry that points `idptestbed` to your Docker server's IP address. 
