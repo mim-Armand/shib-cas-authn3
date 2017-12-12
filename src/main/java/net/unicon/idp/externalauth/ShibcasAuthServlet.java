@@ -114,7 +114,7 @@ public class ShibcasAuthServlet extends HttpServlet {
         //try {
         ticketValidator.setRenew(force);
         String serviceUrl = constructServiceUrl(request, response, true);
-        logger.debug("validating ticket: {} with service url: {}", ticket, serviceUrl);
+        logger.info("validating ticket: {} with service url: {}", ticket, serviceUrl);
 
 //            Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
 //            if (assertion == null) {
