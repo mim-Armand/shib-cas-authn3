@@ -63,6 +63,8 @@ public class ShibcasAuthServlet extends HttpServlet {
         // TODO: We have the opportunity to give back more to Shib than just the PRINCIPAL_NAME_KEY. Identify additional information
 
         logger.info("Entering doGet....");
+        logger.debug("Entering doGet....");
+        logger.error("Entering doGet....");
 
         try {
             final String ticket = CommonUtils.safeGetParameter(request, artifactParameterName);
@@ -114,13 +116,13 @@ public class ShibcasAuthServlet extends HttpServlet {
         String serviceUrl = constructServiceUrl(request, response, true);
         logger.debug("validating ticket: {} with service url: {}", ticket, serviceUrl);
 
-        Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
+//            Assertion assertion = ticketValidator.validate(ticket, serviceUrl);
 //            if (assertion == null) {
 //                throw new TicketValidationException("Validation failed. Assertion could not be retrieved for ticket " + ticket);
 //            }
-        for (CasToShibTranslator casToShibTranslator : translators) {
-            casToShibTranslator.doTranslation(request, response, assertion);
-        }
+//            for (CasToShibTranslator casToShibTranslator : translators) {
+//                casToShibTranslator.doTranslation(request, response, assertion);
+//            }
         ExternalAuthentication.finishExternalAuthentication(authenticationKey, request, response);
 //        } catch (final TicketValidationException e) {
 //            logger.error("Ticket validation failed, returning InvalidTicket", e);
